@@ -19,12 +19,22 @@ import java.util.List;
 class CalculatorNumber {
     private String currentNumber = "";
     private boolean isDecimal = false;
+    private boolean isResult = false;
+    public void setIsResult(boolean isResult) {
+        this.isResult = isResult;
+    }
 
     public void addDigit(String digit) {
-        currentNumber += digit;
+        if(isResult) {
+            currentNumber = digit;
+            isResult = false;
+        } else {
+            currentNumber += digit;
+        }
     }
 
     public void addDecimalPoint() {
+        if(isResult) return;
         if (!isDecimal) {
             currentNumber += ".";
             isDecimal = true;
@@ -67,17 +77,6 @@ public class MainActivity extends AppCompatActivity {
     Button multiplyButton;
     Button subtractButton;
     Button plusButton;
-
-    Button button0;
-    Button button1;
-    Button button2;
-    Button button3;
-    Button button4;
-    Button button5;
-    Button button6;
-    Button button7;
-    Button button8;
-    Button button9;
     Button equalButton;
     TextView result;
     Button dotButton;
@@ -92,16 +91,6 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        button0 = findViewById(R.id.button0);
-        button1 = findViewById(R.id.button1);
-        button2 = findViewById(R.id.button2);
-        button3 = findViewById(R.id.button3);
-        button4 = findViewById(R.id.button4);
-        button5 = findViewById(R.id.button5);
-        button6 = findViewById(R.id.button6);
-        button7 = findViewById(R.id.button7);
-        button8 = findViewById(R.id.button8);
-        button9 = findViewById(R.id.button9);
         dotButton = findViewById(R.id.buttonDot);
 
         divideButton = findViewById(R.id.divideButton);
@@ -167,6 +156,18 @@ public class MainActivity extends AppCompatActivity {
                 handleEqualClick();
             }
         });
+        percentButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                handlePercentCLick();
+            }
+        });
+        acButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                acClick();
+            }
+        });
 
     }
     void addNumber()
@@ -180,16 +181,23 @@ public class MainActivity extends AppCompatActivity {
     }
     void updateResult() {
         String text = "";
-        if (!(numbers.get(numbers.size() - 1).getCurrentNumber().isEmpty())) {
-            CalculatorNumber lastNumber = numbers.get(numbers.size() - 1);
-            text = lastNumber.getCurrentNumber();
+            if(!(numbers.isEmpty())) {
+            if (!(numbers.get(numbers.size() - 1).getCurrentNumber().isEmpty())) {
+                CalculatorNumber lastNumber = numbers.get(numbers.size() - 1);
+                text = lastNumber.getCurrentNumber();
+            }
         }
         result.setText(text);
-
     }
     void acClick () {
         numbers.clear();
+        CalculatorNumber calcNumber = new CalculatorNumber();
+        numbers.add(calcNumber);
         updateResult();
+    }
+    void handlePercentCLick() {
+        addNumber();
+        operations.add("%");
     }
     void handleAddClick() {
         addNumber();
@@ -226,7 +234,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void handleEqualClick() {
-
+        int numberIndex = 0;
+        int operationIndex = 0;
+        float equationValue = numbers.get(numberIndex++).getCurrentFloat();
+        while (numberIndex < numbers.size() && operationIndex < operations.size()) {
+              switch(operations.get(operationIndex)) {
+                  case "+":
+                      equationValue = equationValue + numbers.get(numberIndex++).getCurrentFloat();
+                      break;
+                  case "-":
+                      equationValue = equationValue - numbers.get(numberIndex++).getCurrentFloat();
+                      break;
+                  case "/":
+                      equationValue = equationValue / numbers.get(numberIndex++).getCurrentFloat();
+                      break;
+                  case "*":
+                      equationValue = equationValue * numbers.get(numberIndex++).getCurrentFloat();
+                      break;
+                  case "%":
+                      equationValue = equationValue % numbers.get(numberIndex++).getCurrentFloat();
+                      break;
+                  default:
+                      operationIndex++;
+              }
+              Number value = checkIfDecimal(equationValue);
+              result.setText(value.toString());
+              numbers.clear();
+              operations.clear();
+              CalculatorNumber resultNumber = new CalculatorNumber();
+              resultNumber.addDigit(value.toString());
+              resultNumber.setIsResult(true);
+              numbers.add(resultNumber);
+        }
     }
 
 
@@ -239,6 +278,12 @@ public class MainActivity extends AppCompatActivity {
                 handleNumberClick(buttonText);
             }
         });
+    }
+    private static Number checkIfDecimal(float number) {
+        if(number == (int) number) {
+            return (int) number;
+        }
+        return number;
     }
 
 }
